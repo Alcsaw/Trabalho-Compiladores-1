@@ -5,7 +5,6 @@
  */
 package trabalho.de.compiladores;
 
-import java.util.ArrayList;
 
 /**
  *
@@ -20,12 +19,17 @@ public class TrabalhoDeCompiladores {
     public static void main(String[] args) {
         // TODO code application logic here
         //String[] prod = {"S->cAa|D", "A->cB|B|F", "B->bcB|E|C", "C->c|E", "D->f|g", "F->CD"};
-        //String[] prod = {"S->cAa", "A->cB|B", "B->bcB|E"};
-        String[] prod = {"S->XYZ", "X->aXb|E", "Y->cYZcX|d", "Z->eZYe|f"};
-        TopDown top = new TopDown(prod);
+        String[] prod = {"S->cAa", "A->cB|B", "B->bcB|E"};
+        //String[] prod = {"S->XYZ", "X->aXb|E", "Y->cYZcX|d", "Z->eZYe|f"};
+        
+        String[] mensagem = {"c","b","c","a","$"};
+        TopDown top = new TopDown(prod, mensagem);
         top.printMapa();
         top.printFirst();
         top.printFollow();
+        top.printTerminais();
+        top.printTabela();
+        top.printEntrada();
     }
     
 }

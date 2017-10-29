@@ -1,9 +1,12 @@
 package trabalho.de.compiladores;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -14,18 +17,33 @@ public class TopDown {
     private Map<String, Set<String>> mapaProducoes;
     private Map<String, Set<String>> mapaFirst;
     private Map<String, Set<String>> mapaFollow;
-    private Stack<String> stack;
 
-    public TopDown(String[] productions) {
+    private Stack<String> pilha;
+    private Stack<String> pilhaEntrada;
+    private List<String> entrada;
+
+    private Set<String> terminais;
+    private Map<String, Map<String, String>> tabela;
+
+    public TopDown(String[] productions, String[] mensagem) {
         mapaProducoes = new LinkedHashMap<>();
         mapaFirst = new HashMap<>();
         mapaFollow = new LinkedHashMap<>();
+        terminais = new HashSet<>();
+        tabela = new HashMap<>();
 
-        stack = new Stack<>();
+        pilha = new Stack<>();
+        pilhaEntrada = new Stack<>();
+        entrada = new ArrayList<>(Arrays.asList(mensagem));
+
         this.productions = productions;
         createMap();
         first();
         follow();
+        findTerminals();
+        createTable();
+        setStack();
+        reconhecer();
     }
 
     private void createMap() {
@@ -90,6 +108,7 @@ public class TopDown {
     }
 
     //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="FOLLOW">
     private void follow() {
         mapaProducoes.entrySet().forEach((e) -> { //Loop nas chaves dos mapas
@@ -135,7 +154,7 @@ public class TopDown {
                         }
 
                         if (j.matches(".*(" + NaoTerminal + "[A-Z]+[a-zA-Z]*)$")) {
-                            System.out.println("Matches .*(" + NaoTerminal +"[A-Z])$");
+                            System.out.println("Matches .*(" + NaoTerminal + "[A-Z])$");
                             newfollow.addAll(mapaFirst.get(j.substring(j.indexOf(NaoTerminal) + 1, j.indexOf(NaoTerminal) + 2)));
                         }
 
@@ -157,26 +176,156 @@ public class TopDown {
     }
 
     //</editor-fold>
-//<editor-fold defaultstate="collapsed" desc="PRINT">
+    
+    //<editor-fold defaultstate="collapsed" desc="MONATAGEM TABELA">
+    private void findTerminals() {
+        mapaProducoes.entrySet().forEach((e) -> {
+            e.getValue().forEach((f) -> {
+                String[] split = f.split("");
+                for (String s : split) {
+                    if (s.matches("^(.*([a-z]|\\$|E))")) {
+                        terminais.add(s);
+                    }
+                }
+
+            });
+        });
+        terminais.add("$");
+    }
+
+    private void createTable() {
+        System.out.println("\n=== CRIAR TABELA ===");
+        mapaProducoes.entrySet().forEach((e) -> {
+            System.out.println("\nNova linha: " + e.getValue().toString());
+            Map<String, String> mapa = new HashMap<>();
+
+            e.getValue().forEach((f) -> {
+                Set<String> set = getFirst(e.getKey(), f);
+                System.out.println("Set: " + set.toString() + "   ");
+
+                set.forEach((g) -> {
+                    System.out.println("Coluna: " + g + " Valor: " + f);
+                    mapa.put(g, f);
+                });
+            });
+            tabela.put(e.getKey(), mapa);
+        });
+    }
+
+    private Set<String> getFirst(String NaoTerminal, String prod) {
+        Set<String> line = new HashSet<>();
+
+        System.out.println("Prod: " + prod);
+        if (prod.matches("^([a-z][a-zA-Z]*)")) {
+            System.out.println("inicia com terminal");
+            line.add(prod.substring(0, 1));
+            return line;
+        } else {
+            if (prod.matches("^([A-Z][a-zA-Z]*)") && !prod.equals("E")) {
+                System.out.println("Inicia com Não terminal");
+                line.addAll(mapaFirst.get(prod.substring(0, 1)));
+                return line;
+            }
+
+            if (prod.equals("E")) {
+                System.out.println("E encontrado, seta follow de " + NaoTerminal);
+                return mapaFollow.get(NaoTerminal);
+            }
+            return line;
+        }
+    }
+
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="RECONHECIMENTO">
+    private void setStack() {
+        Collections.reverse(entrada);
+
+        for (String s : entrada) {
+            pilhaEntrada.add(s);
+        }
+    }
+
+    private void reconhecer() {
+        System.out.println("\n=== RECONHECIMENTO ===");
+        pilha.add("$");
+        pilha.add("S");
+
+        while (!pilha.isEmpty()) {
+            System.out.println("\nPilha: " + pilha);
+            System.out.println("Entrada: " + pilhaEntrada);
+
+            if (pilha.lastElement().equals(pilhaEntrada.lastElement()) && pilhaEntrada.lastElement().matches("^([a-z]|\\$)$")) {
+                pilhaEntrada.pop();
+                System.out.println("Desempilha: " + pilha.pop());
+            } else {
+                if (pilha.lastElement().matches("[A-Z]") && !pilha.lastElement().equals("E") ) {
+                    String elemento = pilha.pop();
+                    String[] prod = tabela.get(elemento).get(pilhaEntrada.lastElement()).split("");
+                    System.out.println("prod: " + Arrays.toString(prod));
+                    List<String> p = Arrays.asList(prod);
+                    Collections.reverse(p);
+
+                    for (String s : p) {
+                        pilha.add(s);
+                    }
+
+                }else{
+                    if(pilha.lastElement().equals("E")){
+                        pilha.pop();
+                    }
+                }
+            }
+        }
+        if(pilha.isEmpty() && pilhaEntrada.isEmpty()){
+            System.out.println("MENSAGEM RECONHECIDA !!!");
+        }
+        
+    }
+
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="PRINT">
     public void printMapa() {
-        System.out.println("\nMAPA");
+        System.out.println("\n=== MAPA ===");
         for (Map.Entry<String, Set<String>> e : mapaProducoes.entrySet()) {
             System.out.println(e.getKey() + e.getValue().toString());
         }
     }
 
     public void printFirst() {
-        System.out.println("\nFIRST");
+        System.out.println("\n=== FIRST ===");
         mapaFirst.entrySet().forEach((e) -> {
             System.out.println(e.getKey() + e.getValue().toString());
         });
     }
 
     public void printFollow() {
-        System.out.println("\nFOLLOW");
+        System.out.println("\n=== FOLLOW ===");
         mapaFollow.entrySet().forEach((e) -> {
             System.out.println(e.getKey() + e.getValue().toString());
         });
+    }
+
+    public void printTerminais() {
+        System.out.println("\n=== TERMINAIS ===");
+        System.out.println(terminais.toString());
+    }
+
+    public void printTabela() {
+        System.out.println("\n=== TABELA ===");
+        tabela.entrySet().forEach((e) -> {
+            e.getValue().entrySet().forEach((f) -> {
+                System.out.print(f.getKey() + " " + f.getValue() + "  ");
+
+            });
+            System.out.print("\n");
+        });
+    }
+
+    public void printEntrada() {
+        System.out.println("\n=== PILHA ENTRADA ===");
+        System.out.println("Entrada: " + entrada);
+        System.out.println("Pilha Entrada: " + pilhaEntrada);
+        System.out.println("Pilha Simbolos: " + pilha);
     }
 
     //</editor-fold>
