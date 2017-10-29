@@ -19,7 +19,7 @@ public class TrabalhoDeCompiladores {
         // TODO code application logic here
          String[] prod = {"S->cAa", "A->cB|B", "B->bcB|E|C|D", "C->c|E", "D->a|b"};
         TopDown top = new TopDown(prod);
-        top.printMapa();
+       // top.printMapa();
         top.printFirst();
     }
     

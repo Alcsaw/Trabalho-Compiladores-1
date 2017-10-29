@@ -1,22 +1,26 @@
 package trabalho.de.compiladores;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 public class TopDown {
 
     private String[] productions;
-    private Map<String, List<String>> mapa;
-    private Map<String, List<String>> first;
+    private Map<String, Set<String>> mapaProducoes;
+    private Map<String, Set<String>> mapaFirst;
+    private Map<String, Set<String>> mapaFollow;
     private Stack<String> stack;
 
     public TopDown(String[] productions) {
-        mapa = new HashMap<>();
-        first = new HashMap<>();
+        mapaProducoes = new LinkedHashMap<>();
+        mapaFirst = new HashMap<>();
+        mapaFollow = new HashMap<>();
+
         stack = new Stack<>();
         this.productions = productions;
         createMap();
@@ -25,45 +29,65 @@ public class TopDown {
 
     private void createMap() {
         for (String s : productions) {
-            mapa.put(s.substring(0, s.indexOf("->")), Arrays.asList(s.substring(s.indexOf("->") + 2, s.length()).split("\\|")));
+            mapaProducoes.put(s.substring(0, s.indexOf("->")), new HashSet<>(Arrays.asList(s.substring(s.indexOf("->") + 2, s.length()).split("\\|"))));
         }
+        printMapa();
     }
 
     private void first() {
-        for (Map.Entry<String, List<String>> e : mapa.entrySet()) {
-            List<String> line = new ArrayList<>();
+        for (Map.Entry<String, Set<String>> e : mapaProducoes.entrySet()) {
+            Set<String> line = new HashSet<>();
 
             e.getValue().forEach((s) -> {
-                //if (s.substring(0, 1).equals("E") || s.substring(0, 1).matches("[a-z]")) {
-                    line.add(s.substring(0, 1));
-                //} else {
-                    //if (s.substring(0, 1).matches("[A-Z]")) {
-                        stack.push(s.substring(0, 1));
-                   // }
-                //}
+                String symbol = s.substring(0, 1);
+                System.out.println("Symbol: " + symbol);
+                if (symbol.equals("E") || symbol.matches("[a-z]")) {
+                    line.add(symbol);
+                } else {
+                    if (symbol.matches("[A-Z]")) {
+
+                        line.addAll(findReplacement(symbol));
+
+                    }
+                }
             });
-            first.put(e.getKey(), line);
+            System.out.println("Line added to FIRST: " + line.toString());
+            mapaFirst.put(e.getKey(), line);
         }
-
     }
 
-    private boolean hasNt(){
+    public Set<String> findReplacement(String naoTerminal) {
+        Set<String> newFisrt = new HashSet<>();
+        System.out.println("Não Terminal: " + naoTerminal);
+        if (mapaFirst.get(naoTerminal) == null) {
+            
+            mapaProducoes.get(naoTerminal).forEach((e) -> {
+                System.out.println("e: " + e);
+                String symbol = e.substring(0, 1);
+                if(symbol.matches("[a-z]") || symbol.equals("E")){
+                    newFisrt.add(symbol);
+                }else{
+                    newFisrt.addAll(findReplacement(symbol));
+                }
+                
+            });
+            mapaFirst.put(naoTerminal, newFisrt);
+        }
         
-        
-        
-        return false;
+        return mapaFirst.get(naoTerminal);
     }
-    
-     public void printMapa() {
+
+    public void printMapa() {
         System.out.println("\nMAPA");
-        for (Map.Entry<String, List<String>> e : mapa.entrySet()) {
+        for (Map.Entry<String, Set<String>> e : mapaProducoes.entrySet()) {
             System.out.println(e.getKey() + e.getValue().toString());
         }
+        System.out.println("\n");
     }
 
     public void printFirst() {
         System.out.println("\nFIRST");
-        first.entrySet().forEach((e) -> {
+        mapaFirst.entrySet().forEach((e) -> {
             System.out.println(e.getKey() + Arrays.toString(e.getValue().toArray()));
         });
     }
