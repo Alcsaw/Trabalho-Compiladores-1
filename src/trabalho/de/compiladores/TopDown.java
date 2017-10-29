@@ -19,7 +19,7 @@ public class TopDown {
     public TopDown(String[] productions) {
         mapaProducoes = new LinkedHashMap<>();
         mapaFirst = new HashMap<>();
-        mapaFollow = new HashMap<>();
+        mapaFollow = new LinkedHashMap<>();
 
         stack = new Stack<>();
         this.productions = productions;
@@ -65,6 +65,7 @@ public class TopDown {
             System.out.println("Line added to FIRST: " + line.toString());
             mapaFirst.put(e.getKey(), line);
         }
+        System.out.println("\n");
     }
 
     public Set<String> findReplacement(String naoTerminal) {
@@ -96,28 +97,67 @@ public class TopDown {
             if (e.getKey().equals("S")) {
                 line.add("$");
             }
-            
-            mapaProducoes.entrySet().forEach((k) ->{ //Loop para achar a ocorrência da chave em outras produções
-                if(k.getValue().contains(e.getKey())){
-                    k.getValue().forEach((j) -> {
-                        if(j.matches(".+("+ e.getKey() + ")$")){ //se exister algo como (1 ou mais simbolos)(Nao terminal analisado)
-                            
-                        }
-                        
-                        if(j.matches(".+("+ e.getKey() + "[a-z])$")){
-                            
-                        }
-                        
-                    });
-                }
-            });
+            line.addAll(findFollow(e.getKey()));
+
             mapaFollow.put(e.getKey(), line);
         });
 
     }
 
+    private Set<String> findFollow(String NaoTerminal) {
+        Set<String> newfollow = new HashSet<>();
+        System.out.println("---Var: " + NaoTerminal);
+        if (mapaFollow.get(NaoTerminal) == null) {
+            System.out.println("Nãp está no mapa");
+            mapaProducoes.entrySet().forEach((k) -> { //Loop para achar a ocorrência da chave em outras produções
+
+                if (containsNaoTerminal(k.getValue(), NaoTerminal)) {
+                    System.out.println("Key: " + k.getKey() + " contains " + NaoTerminal);
+                    k.getValue().forEach((j) -> {
+                        System.out.println("K: " + j);
+
+                        if (j.matches(".*(" + NaoTerminal + ")$")) { //se exister algo como [1 ou mais simbolos][Nao terminal analisado]
+                            System.out.println("Matches .*(" + NaoTerminal + ")$");
+                            System.out.println("Key: " + k.getKey() + " Nao terminal: " + NaoTerminal);
+                            if (!NaoTerminal.equals(k.getKey())) {
+                                if (mapaFollow.get(k.getKey()) == null) { //Se nao existir o follow do Simbolo a esqueda da produção então procura ele
+                                    System.out.println("Find follow: " + k.getKey());
+                                    newfollow.addAll(findFollow(k.getKey()));
+                                } else {
+                                    newfollow.addAll(mapaFollow.get(k.getKey()));
+                                }
+                            }
+                        }
+
+                        if (j.matches(".*(" + NaoTerminal + "[a-z]+)$")) { //se exister algo como [0 ou mais simbolos][Nao terminal analisado][Terminal]
+                            System.out.println("Matches .*(" + NaoTerminal + "[a-z])$");
+                            newfollow.add(j.substring(j.indexOf(NaoTerminal) + 1, j.indexOf(NaoTerminal) + 2));
+                        }
+
+                        if (j.matches(".*(" + NaoTerminal + "[A-Z]+[a-zA-Z]*)$")) {
+                            System.out.println("Matches .*(" + NaoTerminal +"[A-Z])$");
+                            newfollow.addAll(mapaFirst.get(j.substring(j.indexOf(NaoTerminal) + 1, j.indexOf(NaoTerminal) + 2)));
+                        }
+
+                    });
+                }
+            });
+            System.out.println("Line added to FOLLOW: " + newfollow.toString());
+            mapaFollow.put(NaoTerminal, newfollow);
+        }
+
+        return mapaFollow.get(NaoTerminal);
+    }
+
+    private boolean containsNaoTerminal(Set<String> set, String NaoTerminal) {
+        if (set.stream().anyMatch((s) -> (s.contains(NaoTerminal)))) {
+            return true;
+        }
+        return false;
+    }
+
     //</editor-fold>
-    //<editor-fold defaultstate="collapsed" desc="PRINT">
+//<editor-fold defaultstate="collapsed" desc="PRINT">
     public void printMapa() {
         System.out.println("\nMAPA");
         for (Map.Entry<String, Set<String>> e : mapaProducoes.entrySet()) {
