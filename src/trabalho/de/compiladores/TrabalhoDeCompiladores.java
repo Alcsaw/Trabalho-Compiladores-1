@@ -17,10 +17,11 @@ public class TrabalhoDeCompiladores {
      */
     public static void main(String[] args) {
         // TODO code application logic here
-         String[] prod = {"S->cAa", "A->cB|B", "B->bcB|E|C|D", "C->c|E", "D->a|b"};
+         String[] prod = {"S->cAa|D", "A->cB|B", "B->bcB|E|C", "C->c|E", "D->f|g", "F->CD"};
         TopDown top = new TopDown(prod);
-       // top.printMapa();
+        top.printMapa();
         top.printFirst();
+        top.printFollow();
     }
     
 }

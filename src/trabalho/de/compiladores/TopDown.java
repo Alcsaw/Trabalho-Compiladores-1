@@ -25,6 +25,7 @@ public class TopDown {
         this.productions = productions;
         createMap();
         first();
+        follow();
     }
 
     private void createMap() {
@@ -34,6 +35,7 @@ public class TopDown {
         printMapa();
     }
 
+    //<editor-fold defaultstate="collapsed" desc="FIRST">
     private void first() {
         for (Map.Entry<String, Set<String>> e : mapaProducoes.entrySet()) {
             Set<String> line = new HashSet<>();
@@ -45,8 +47,17 @@ public class TopDown {
                     line.add(symbol);
                 } else {
                     if (symbol.matches("[A-Z]")) {
+                        Set<String> temp = findReplacement(symbol);
 
-                        line.addAll(findReplacement(symbol));
+                        if (temp.contains("E") && s.length() > 1) { //Se existir algo como A->XYZ, X->a|E, Y->b|c, Z->d,e
+                            for (String letter : s.split("")) {
+                                temp = findReplacement(letter);
+                                if (temp.contains("E") == false) {
+                                    break;
+                                }
+                            }
+                        }
+                        line.addAll(temp);
 
                     }
                 }
@@ -60,35 +71,73 @@ public class TopDown {
         Set<String> newFisrt = new HashSet<>();
         System.out.println("Não Terminal: " + naoTerminal);
         if (mapaFirst.get(naoTerminal) == null) {
-            
+
             mapaProducoes.get(naoTerminal).forEach((e) -> {
                 System.out.println("e: " + e);
                 String symbol = e.substring(0, 1);
-                if(symbol.matches("[a-z]") || symbol.equals("E")){
+                if (symbol.matches("[a-z]") || symbol.equals("E")) {
                     newFisrt.add(symbol);
-                }else{
+                } else {
                     newFisrt.addAll(findReplacement(symbol));
                 }
-                
+
             });
             mapaFirst.put(naoTerminal, newFisrt);
         }
-        
+
         return mapaFirst.get(naoTerminal);
     }
 
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="FOLLOW">
+    private void follow() {
+        mapaProducoes.entrySet().forEach((e) -> { //Loop nas chaves dos mapas
+            Set<String> line = new HashSet<>();
+            if (e.getKey().equals("S")) {
+                line.add("$");
+            }
+            
+            mapaProducoes.entrySet().forEach((k) ->{ //Loop para achar a ocorrência da chave em outras produções
+                if(k.getValue().contains(e.getKey())){
+                    k.getValue().forEach((j) -> {
+                        if(j.matches(".+("+ e.getKey() + ")$")){ //se exister algo como (1 ou mais simbolos)(Nao terminal analisado)
+                            
+                        }
+                        
+                        if(j.matches(".+("+ e.getKey() + "[a-z])$")){
+                            
+                        }
+                        
+                    });
+                }
+            });
+            mapaFollow.put(e.getKey(), line);
+        });
+
+    }
+
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="PRINT">
     public void printMapa() {
         System.out.println("\nMAPA");
         for (Map.Entry<String, Set<String>> e : mapaProducoes.entrySet()) {
             System.out.println(e.getKey() + e.getValue().toString());
         }
-        System.out.println("\n");
     }
 
     public void printFirst() {
         System.out.println("\nFIRST");
         mapaFirst.entrySet().forEach((e) -> {
-            System.out.println(e.getKey() + Arrays.toString(e.getValue().toArray()));
+            System.out.println(e.getKey() + e.getValue().toString());
         });
     }
+
+    public void printFollow() {
+        System.out.println("\nFOLLOW");
+        mapaFollow.entrySet().forEach((e) -> {
+            System.out.println(e.getKey() + e.getValue().toString());
+        });
+    }
+
+    //</editor-fold>
 }
