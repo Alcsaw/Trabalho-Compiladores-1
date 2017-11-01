@@ -62,7 +62,7 @@ public class TopDown {
             e.getValue().forEach((s) -> {
                 String symbol = s.substring(0, 1);
                 System.out.println("Symbol: " + symbol);
-                if (symbol.equals("E") || symbol.matches("[a-z]")) {
+                if (symbol.equals("E") || symbol.matches("[a-z]") || symbol.matches("\\d")) {
                     line.add(symbol);
                 } else {
                     if (symbol.matches("[A-Z]")) {
@@ -77,7 +77,16 @@ public class TopDown {
                             }
                         }
                         line.addAll(temp);
-
+                        if (line.isEmpty()){
+                            System.out.println("ERROR: Couldn't recognize the entered Grammar."
+                                    + "\nThere's no FIRST related with production " + symbol);
+                            System.exit(1);
+                        }
+                    }
+                    else{
+                        System.out.println("ERROR: Couldn't recognize the entered Grammar."
+                                + "\nProduction symbol (" + symbol + ") is not acceptable.");
+                        System.exit(1);
                     }
                 }
             });
@@ -95,7 +104,7 @@ public class TopDown {
             mapaProducoes.get(naoTerminal).forEach((e) -> {
                 System.out.println("e: " + e);
                 String symbol = e.substring(0, 1);
-                if (symbol.matches("[a-z]") || symbol.equals("E")) {
+                if (symbol.matches("[a-z]") || symbol.equals("E") || symbol.matches("\\d")) {
                     newFisrt.add(symbol);
                 } else {
                     newFisrt.addAll(findReplacement(symbol));
@@ -111,14 +120,15 @@ public class TopDown {
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="FOLLOW">
     private void follow() {
-        mapaProducoes.entrySet().forEach((e) -> { //Loop nas chaves dos mapas
+        mapaProducoes.entrySet().forEach((e) -> {   //Loop nas chaves dos mapas
+            String currentKey = e.getKey();
             Set<String> line = new HashSet<>();
-            if (e.getKey().equals("S")) {
+            if (currentKey.equals("S")) {           //What if S is not the beginning symbol? 
                 line.add("$");
             }
-            line.addAll(findFollow(e.getKey()));
+            line.addAll(findFollow(currentKey));
 
-            mapaFollow.put(e.getKey(), line);
+            mapaFollow.put(currentKey, line);
         });
 
     }
@@ -127,7 +137,7 @@ public class TopDown {
         Set<String> newfollow = new HashSet<>();
         System.out.println("---Var: " + NaoTerminal);
         if (mapaFollow.get(NaoTerminal) == null) {
-            System.out.println("Nãp está no mapa");
+            System.out.println("Não está no mapa");
             mapaProducoes.entrySet().forEach((k) -> { //Loop para achar a ocorrência da chave em outras produções
 
                 if (containsNaoTerminal(k.getValue(), NaoTerminal)) {
@@ -169,10 +179,7 @@ public class TopDown {
     }
 
     private boolean containsNaoTerminal(Set<String> set, String NaoTerminal) {
-        if (set.stream().anyMatch((s) -> (s.contains(NaoTerminal)))) {
-            return true;
-        }
-        return false;
+        return set.stream().anyMatch((s) -> (s.contains(NaoTerminal)));
     }
 
     //</editor-fold>
