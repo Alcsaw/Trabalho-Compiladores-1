@@ -20,9 +20,11 @@ public class TrabalhoDeCompiladores {
         // TODO code application logic here
         //String[] prod = {"S->cAa|D", "A->cB|B|F", "B->bcB|E|C", "C->c|E", "D->f|g", "F->CD"};
         String[] prod = {"S->cAa", "A->cB|B", "B->bcB|E"};
+        //String[] prod = {"S->3A1", "A->3B|B", "B->23B|E"};
         //String[] prod = {"S->XYZ", "X->aXb|E", "Y->cYZcX|d", "Z->eZYe|f"};
         
         String[] mensagem = {"c","b","c","a","$"};
+        //String[] mensagem = {"3","2","3","1","$"};
         TopDown top = new TopDown(prod, mensagem);
         top.printMapa();
         top.printFirst();

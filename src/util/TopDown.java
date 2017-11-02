@@ -158,12 +158,12 @@ public class TopDown {
                             }
                         }
 
-                        if (j.matches(".*(" + NaoTerminal + "[a-z]+)$")) { //se exister algo como [0 ou mais simbolos][Nao terminal analisado][Terminal]
+                        if (j.matches(".*(" + NaoTerminal + "([a-z0-9])+(\\w)*)$")) { //se exister algo como [0 ou mais simbolos][Nao terminal analisado][Terminal]
                             System.out.println("Matches .*(" + NaoTerminal + "[a-z])$");
                             newfollow.add(j.substring(j.indexOf(NaoTerminal) + 1, j.indexOf(NaoTerminal) + 2));
                         }
 
-                        if (j.matches(".*(" + NaoTerminal + "[A-Z]+[a-zA-Z]*)$")) {
+                        if (j.matches(".*(" + NaoTerminal + "[A-Z]+[a-zA-Z0-9]*)$")) {
                             System.out.println("Matches .*(" + NaoTerminal + "[A-Z])$");
                             newfollow.addAll(mapaFirst.get(j.substring(j.indexOf(NaoTerminal) + 1, j.indexOf(NaoTerminal) + 2)));
                         }
@@ -189,7 +189,7 @@ public class TopDown {
             e.getValue().forEach((f) -> {
                 String[] split = f.split("");
                 for (String s : split) {
-                    if (s.matches("^(.*([a-z]|\\$|E))")) {
+                    if (s.matches("^(.*([a-z0-9]|\\$|E))")) {
                         terminais.add(s);
                     }
                 }
@@ -207,7 +207,7 @@ public class TopDown {
 
             e.getValue().forEach((f) -> {
                 Set<String> set = getFirst(e.getKey(), f);
-                System.out.println("Set: " + set.toString() + "   ");
+                System.out.println("Set: " + set.toString() + "\t");
 
                 set.forEach((g) -> {
                     System.out.println("Coluna: " + g + " Valor: " + f);
@@ -222,12 +222,12 @@ public class TopDown {
         Set<String> line = new HashSet<>();
 
         System.out.println("Prod: " + prod);
-        if (prod.matches("^([a-z][a-zA-Z]*)")) {
+        if (prod.matches("^([a-z0-9][a-z0-9A-Z]*)")) {
             System.out.println("inicia com terminal");
             line.add(prod.substring(0, 1));
             return line;
         } else {
-            if (prod.matches("^([A-Z][a-zA-Z]*)") && !prod.equals("E")) {
+            if (prod.matches("^([A-Z][a-z0-9A-Z]*)") && !prod.equals("E")) {
                 System.out.println("Inicia com Não terminal");
                 line.addAll(mapaFirst.get(prod.substring(0, 1)));
                 return line;
@@ -260,7 +260,7 @@ public class TopDown {
             System.out.println("\nPilha: " + pilha);
             System.out.println("Entrada: " + pilhaEntrada);
 
-            if (pilha.lastElement().equals(pilhaEntrada.lastElement()) && pilhaEntrada.lastElement().matches("^([a-z]|\\$)$")) {
+            if (pilha.lastElement().equals(pilhaEntrada.lastElement()) && pilhaEntrada.lastElement().matches("^([a-z0-9]|\\$)$")) {
                 pilhaEntrada.pop();
                 System.out.println("Desempilha: " + pilha.pop());
             } else {
